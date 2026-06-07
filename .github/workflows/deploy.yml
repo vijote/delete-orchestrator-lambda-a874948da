@@ -1,0 +1,51 @@
+name: Deploy Cargo Lambda
+
+on:
+  push:
+    branches:
+      - main  # Trigger on push to main branch
+  workflow_dispatch:
+    inputs:
+      id_entorno:
+        description: 'ID único del entorno efímero'
+        required: false
+        type: string
+
+permissions:
+  id-token: write   # Requerido si usas OIDC para autenticarte en AWS
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install Rust toolchain with Cargo Lambda
+        uses: moonrepo/setup-rust@v1
+        with:
+          bins: cargo-lambda
+          targets: x86_64-unknown-linux-musl
+
+      - name: Install Zig toolchain
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.13.0
+
+      - name: Build Lambda
+        run: cargo lambda build --release --target x86_64-unknown-linux-musl --output-format zip
+
+      - name: Prepare Artifact
+        run: |
+          # Copiamos el zip generado al directorio raíz del workspace para ubicarlo fácil
+          cp target/lambda/*/*.zip ./bootstrap.zip
+
+      # NUEVO PASO: Exporta el archivo a la interfaz de GitHub Actions
+      - name: Upload Artifact to GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-bootstrap-zip  # El nombre que tendrá el archivo de descarga en GitHub
+          path: ./bootstrap.zip       # La ruta al archivo que preparamos en el paso anterior
+          retention-days: 5           # Opcional: días que se guardará antes de borrarse solo
