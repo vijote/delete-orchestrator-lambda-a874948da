@@ -11,6 +11,8 @@ serde_json = "1.0"
 tokio = { version = "1", features = ["full"] }
 
 # AWS SDK para Rust
+aws-sdk-ecr = "1.0"
+aws-sdk-s3 = "1.0"
 aws-config = { version = "1.1", features = ["behavior-version-latest"] }
 aws-sdk-cloudformation = "1.1"
 aws-sdk-cloudfront= "1.118.0"
